@@ -1,4 +1,5 @@
 #include "../exercise.h"
+#include <iostream>
 
 constexpr unsigned long long fibonacci(int i) {
     switch (i) {
@@ -17,9 +18,9 @@ int main(int argc, char **argv) {
     std::cout << "fibonacci(20) = " << FIB20 << std::endl;
 
     // TODO: 观察错误信息，修改一处，使代码编译运行
-    // PS: 编译运行，但是不一定能算出结果……
+    // PS: 编译运行，但是不一定能算出结果......
     constexpr auto ANS_N = 90;
-    constexpr auto ANS = fibonacci(ANS_N);
+    auto ANS = fibonacci(ANS_N); // 仅删除此处 constexpr，修改完成
     std::cout << "fibonacci(" << ANS_N << ") = " << ANS << std::endl;
 
     return 0;
