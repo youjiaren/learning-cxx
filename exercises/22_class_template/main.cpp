@@ -8,8 +8,15 @@ struct Tensor4D {
     T *data;
 
     Tensor4D(unsigned int const shape_[4], T const *data_) {
+        // 复制维度信息
+        for (int d = 0; d < 4; ++d) {
+            shape[d] = shape_[d];
+        }
+        // 计算总元素个数
         unsigned int size = 1;
-        // TODO: 填入正确的 shape 并计算 size
+        for (int d = 0; d < 4; ++d) {
+            size *= shape[d];
+        }
         data = new T[size];
         std::memcpy(data, data_, size * sizeof(T));
     }
@@ -27,7 +34,37 @@ struct Tensor4D {
     // 例如，`this` 形状为 `[1, 2, 3, 4]`，`others` 形状为 `[1, 2, 1, 4]`，
     // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
-        // TODO: 实现单向广播的加法
+        unsigned int N = shape[0];
+        unsigned int C = shape[1];
+        unsigned int H = shape[2];
+        unsigned int W = shape[3];
+        unsigned int total = N * C * H * W;
+
+        for (unsigned int idx = 0; idx < total; ++idx) {
+            // 一维索引拆解四维坐标 n,c,h,w
+            unsigned int n = idx / (C * H * W);
+            unsigned int rem1 = idx % (C * H * W);
+
+            unsigned int c = rem1 / (H * W);
+            unsigned int rem2 = rem1 % (H * W);
+
+            unsigned int h = rem2 / W;
+            unsigned int w = rem2 % W;
+
+            // 广播维度映射，维度为1则取0下标
+            unsigned int on = (others.shape[0] == 1) ? 0 : n;
+            unsigned int oc = (others.shape[1] == 1) ? 0 : c;
+            unsigned int oh = (others.shape[2] == 1) ? 0 : h;
+            unsigned int ow = (others.shape[3] == 1) ? 0 : w;
+
+            // 计算others一维内存索引
+            unsigned int o_total_c = others.shape[1] * others.shape[2] * others.shape[3];
+            unsigned int o_total_h = others.shape[2] * others.shape[3];
+            unsigned int o_idx = on * o_total_c + oc * o_total_h + oh * others.shape[3] + ow;
+
+            // 原地相加
+            data[idx] += others.data[o_idx];
+        }
         return *this;
     }
 };
@@ -106,4 +143,5 @@ int main(int argc, char **argv) {
             ASSERT(t0.data[i] == d0[i] + 1, "Every element of t0 should be incremented by 1 after adding t1 to it.");
         }
     }
+    return 0;
 }
